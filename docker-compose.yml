@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: medical_db
+    environment:
+      POSTGRES_DB: medical_assistant
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - SECRET_KEY=${SECRET_KEY}
+    volumes:
+      - ./backend/app:/app/app
+    depends_on:
+      - db
+    restart: on-failure
+
+  frontend:
+    working_dir: /app/frontend
+    command: sh -c "yarn install && yarn dev"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app/frontend
+    stdin_open: true
+    tty: true
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
