@@ -1,150 +1,106 @@
 // frontend/src/App.jsx
-import { useState, useEffect, useRef } from "react";
+import React, { useContext } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, AuthContext } from './context/AuthContext';
 
-export default function App() {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef(null);
+// Pages (пока простые заглушки)
+import Login from './pages/Login';
+import ChatPage from './pages/ChatPage';
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+// Простые компоненты для тестирования
+const SimpleLogin = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="max-w-md w-full space-y-8">
+      <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        🏥 Medical Assistant
+      </h2>
+      <p className="text-center text-gray-600">Временная страница входа</p>
+      <button 
+        onClick={() => window.location.href = '/dashboard'}
+        className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700"
+      >
+        Войти (тест)
+      </button>
+    </div>
+  </div>
+);
 
-    const userMessage = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setIsTyping(true);
-
-    try {
-      const res = await fetch("http://localhost:8000/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      const data = await res.json();
-      const aiMessage = {
-        role: "assistant",
-        content: data.response || "Не удалось получить ответ.",
-      };
-      setMessages((prev) => [...prev, aiMessage]);
-    } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "Ошибка: не удалось подключиться к серверу." },
-      ]);
-    } finally {
-      setIsTyping(false);
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
-
-  useEffect(() => {
-    setMessages([
-      { role: "assistant", content: "Здравствуйте! Я ваш цифровой медицинский ассистент. Чем могу помочь?" },
-    ]);
-  }, []);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  return (
-    <div style={{
-      height: "100vh",
-      display: "flex",
-      flexDirection: "column",
-      fontFamily: "Arial, sans-serif",
-      backgroundColor: "#f7f9fc",
-    }}>
-      <header style={{
-        padding: "1rem",
-        backgroundColor: "#007bff",
-        color: "white",
-        textAlign: "center",
-        fontWeight: "bold",
-        fontSize: "1.2rem",
-      }}>
-        🏥 Медицинский Ассистент
-      </header>
-
-      <div style={{
-        flex: 1,
-        padding: "1rem",
-        overflowY: "auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "0.5rem",
-      }}>
-        {messages.map((msg, i) => (
-          <div
-            key={i}
-            style={{
-              alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
-              backgroundColor: msg.role === "user" ? "#007bff" : "#e9ecef",
-              color: msg.role === "user" ? "white" : "black",
-              padding: "0.75rem",
-              borderRadius: "1rem",
-              maxWidth: "70%",
-              wordWrap: "break-word",
-            }}
+const SimpleDashboard = () => (
+  <div className="min-h-screen bg-gray-100">
+    <nav className="bg-blue-600 text-white p-4">
+      <h1 className="text-xl font-bold">🏥 Medical Assistant</h1>
+    </nav>
+    <div className="container mx-auto px-4 py-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="font-bold text-lg mb-2">💬 Чат</h3>
+          <p className="text-gray-600 mb-4">Консультация с ИИ</p>
+          <button 
+            onClick={() => window.location.href = '/chat'}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
           >
-            {msg.content}
-          </div>
-        ))}
-        {isTyping && (
-          <div style={{
-            alignSelf: "flex-start",
-            backgroundColor: "#e9ecef",
-            padding: "0.75rem",
-            borderRadius: "1rem",
-            fontStyle: "italic",
-          }}>
-            Печатает...
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      <div style={{
-        padding: "1rem",
-        borderTop: "1px solid #ddd",
-        display: "flex",
-        gap: "0.5rem",
-      }}>
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Введите вопрос (например: 'Как лечить гипертонию?')"
-          style={{
-            flex: 1,
-            padding: "0.75rem",
-            border: "1px solid #ccc",
-            borderRadius: "0.5rem",
-            resize: "none",
-            maxHeight: "100px",
-          }}
-        />
-        <button
-          onClick={sendMessage}
-          disabled={!input.trim() || isTyping}
-          style={{
-            backgroundColor: "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: "0.5rem",
-            padding: "0 1rem",
-            cursor: "pointer",
-          }}
-        >
-          Отправить
-        </button>
+            Открыть
+          </button>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="font-bold text-lg mb-2">📈 ЭКГ Анализ</h3>
+          <p className="text-gray-600 mb-4">Анализ кардиограммы</p>
+          <button 
+            onClick={() => alert('ЭКГ анализ в разработке')}
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          >
+            Анализировать
+          </button>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="font-bold text-lg mb-2">🩻 Рентген</h3>
+          <p className="text-gray-600 mb-4">Анализ снимков</p>
+          <button 
+            onClick={() => alert('Рентген анализ в разработке')}
+            className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+          >
+            Загрузить
+          </button>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="font-bold text-lg mb-2">🎤 Голосовая консультация</h3>
+          <p className="text-gray-600 mb-4">Голосовой помощник</p>
+          <button 
+            onClick={() => alert('Голосовая консультация в разработке')}
+            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+          >
+            Начать
+          </button>
+        </div>
       </div>
     </div>
+  </div>
+);
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<SimpleLogin />} />
+          <Route path="/dashboard" element={<SimpleDashboard />} />
+          <Route path="/chat" element={<ChatPage />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
+
+// Роутер для дашбордов в зависимости от типа пользователя
+const DashboardRouter = () => {
+  const { user } = useContext(AuthContext);
+  
+  if (user?.type === 'doctor') {
+    return <DoctorDashboard />;
+  } else {
+    return <PatientDashboard />;
+  }
+};
+
+export default App;
